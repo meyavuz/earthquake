@@ -1,4 +1,5 @@
 
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm
@@ -8,16 +9,16 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection
 from matplotlib.colors import Normalize
 import numpy as np
-import os
 
 def ParseInput():
   ''' Parse input arguments'''
   import argparse
   parser = argparse.ArgumentParser()
 
-  parser.add_argument("-markersize", type=float, default=5, help="Marker size")
-  parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph")
+  parser.add_argument("-markersize", type=float, default=5, help="Marker size to represent the earthquake data on the map")
+  parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph [sweep the whole range for final video output]")
   parser.add_argument("-nsimpoints", type=int, default=1, help="Number of simultaneous points having different marker size")
+  parser.add_argument("-usgsdata", type=str, help="Filename (e.g. usgs.csv) that contains the earthquake data as downloaded from USGS")
 
   args = parser.parse_args()
 
@@ -26,7 +27,7 @@ def ParseInput():
 def WriteCityNames(m):
   ''' Write names of selected cities on the map'''
 
-  # Lat/lon coordinates of several cities.
+  # Lat/lon coordinates of several cities that lie in the map of interest
   lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90, 
          44.42, 44.78, 41.32, 36.89, 35.46, 31.20, 32.09,
          43.60, 33.89, 39.93, 42.13, 31.94, 45.04, 36.20,
@@ -52,7 +53,7 @@ def WriteCityNames(m):
   # Plot filled circles at the locations of the cities.
   m.plot(xc[:-1],yc[:-1],'bo')
 
-  # Plot the names of those five cities.
+  # Some certain city names need to be shifted for better visualization
   for name, xpt, ypt in zip(cities,xc,yc):
     if name == 'Alexandria' or name == 'Crete' or name == 'Van' or name == 'Malatya':
       plt.text(xpt+10000,ypt-20000,name,fontsize=9)
@@ -69,13 +70,10 @@ def WriteCityNames(m):
 
   return
 
-def main():
+def ReadAndGetData(filename):
 
-  # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
-  # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
-  # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
-
-  df = pd.read_csv('USGS_americas_1950_2017_over6.csv')
+  #df = pd.read_csv('USGS_americas_1950_2017_over6.csv')
+  df = pd.read_csv(filename)
 
   minLon, maxLon = (18.81  ,  51.327  )
   minLat, maxLat = (  29.155  ,  47.883  )
@@ -114,6 +112,17 @@ def main():
   print "Longitude (min,max) = ( ", minLon, " , ", maxLon," )"
   print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
 
+
+  return (lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon)
+
+def main():
+
+  # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
+  # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
+  # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
+
+
+  lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon = ReadAndGetData(ARGS.usgsdata)
 
 
   #exit()
