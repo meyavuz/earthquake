@@ -71,13 +71,19 @@ def WriteCityNames(m):
   return
 
 def ReadAndGetData(filename):
+  ''' 
+  Reads the data file downloaded from the USGS site and filters as necessary 
+  (e.g. only accept earthquakes with magnitude greater than 5 etc)
+  '''
 
-  #df = pd.read_csv('USGS_americas_1950_2017_over6.csv')
-  df = pd.read_csv(filename)
+  # Use pandas to get the USGS data content
+  df = pd.read_csv(filename)  # e.g. filename:  USGS_americas_1950_2017_over6.csv
 
+  # Use hardcoded min/max Longitude/Latitude for the specific map output
   minLon, maxLon = (18.81  ,  51.327  )
   minLat, maxLat = (  29.155  ,  47.883  )
   
+  # Filter data & get only thos larget than 5.0 magnitude
   minMagnitudeDesired = 5.0
 
   filteredDf = df[ (df['latitude'] >= minLat) & 
@@ -87,9 +93,10 @@ def ReadAndGetData(filename):
                    (df['mag'] >= minMagnitudeDesired) ]
 
   filteredDf = df
-  print "len(new.df) = ", len(filteredDf)
+  #print "len(new.df) = ", len(filteredDf)
 
-  #lat = df.latitude  # In panda dataframe format, use df.values.tolist() to convert to list
+  # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list  
+  #lat = df.latitude  # Unfiltered
   #lon = df.longitude
   lat = (filteredDf.latitude).values.tolist()
   lon = (filteredDf.longitude).values.tolist()
@@ -99,6 +106,7 @@ def ReadAndGetData(filename):
   #print " lat = ", lat, " len(lat) = ", len(lat)
   #print " lat[0] =", lat[0]
   
+  # If you don't want filtering, then min/max can be obtained from the read data
   #maxLon = max(lon)
   #minLon = min(lon)
   #maxLat = max(lat)
@@ -112,8 +120,29 @@ def ReadAndGetData(filename):
   print "Longitude (min,max) = ( ", minLon, " , ", maxLon," )"
   print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
 
-
   return (lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon)
+
+def UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon):
+  ''' Convert the same earthquake data info to Google Map heat map format '''
+
+  import gmplot
+  gmap = gmplot.GoogleMapPlotter(midLat, midLon, 3)
+  print "gmap = ", gmap
+
+  #exit()
+  #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
+  #gmap.plot(latitudes, longitudes, 'red', edge_width=8)
+  #gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
+  #gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
+  #gmap.scatter(lat, lon, 'r', size=10, marker=False)
+
+  gmap.heatmap(lat, lon)
+
+  gmap.draw("earthquake_test.html")
+
+  return
+
+
 
 def main():
 
@@ -211,24 +240,12 @@ def main():
     plt.savefig(OutFolder+'/earthquakes_dpi240_'+ str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',facecolor='w',dpi=240)
     #plt.savefig('earthquakes_dpi240_'+ str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',facecolor='w',dpi=240)
     
-
-  # Additional stuff - dumping the heatmap to google maps 
-  import gmplot
-  gmap = gmplot.GoogleMapPlotter(midLat,midLon, 3)
-  print "gmap = ", gmap
-  #exit()
-  #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
-  #gmap.plot(latitudes, longitudes, 'red', edge_width=8)
-  #gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
-  #gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
-  #gmap.scatter(lat, lon, 'r', size=10, marker=False)
-
-  gmap.heatmap(lat, lon)
-
-  gmap.draw("earthquake_test.html")
-
-
   #plt.show()
+
+  # This is additional stuff - dumping the heatmap to google maps format 
+  UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon)
+
+
 
 
 # This is the standard boilerplate that calls the main() function.
