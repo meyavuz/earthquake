@@ -142,6 +142,26 @@ def UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon):
 
   return
 
+def PlotEarthquakeLocationsOnMap(m, lon, lat, plt, date, magn):
+
+    # Default size for already displayed points
+    pstart = ARGS.npoints - ARGS.nsimpoints
+    pend = ARGS.npoints
+    x, y = m(lon[0:pstart],lat[0:pstart])
+    m.plot(x, y,  'ro', alpha=0.8, markersize=5 , markeredgecolor='red', 
+              fillstyle='full', markeredgewidth=0.1)
+
+    # Custom (most of the time bigger) font for the new point to be displayed
+    x, y = m(lon[pstart:pend],lat[pstart:pend])
+    m.plot(x, y,  'ro', alpha=0.8, markersize=65-ARGS.markersize , markeredgecolor='red', 
+              fillstyle='full', markeredgewidth=0.1)
+
+    day = (date[ARGS.npoints].split('T'))[0]
+    #plt.title('Earthquakes above magnitude ' + str(minMagnitudeDesired)  - ' + day)
+    plt.title('Earthquake on ' + day + ' - magnitude ' + str(magn[pend]))
+    #plt.title('Earthquakes')
+
+    return
 
 
 def main():
@@ -208,25 +228,9 @@ def main():
 
   WriteCityNames(m)
 
-  bPlotPoints = False
+  bPlotPoints = True
   if bPlotPoints:
-    # Default size for already displayed points
-    pstart = ARGS.npoints - ARGS.nsimpoints
-    pend = ARGS.npoints
-    x, y = m(lon[0:pstart],lat[0:pstart])
-    m.plot(x, y,  'ro', alpha=0.8, markersize=5 , markeredgecolor='red', 
-              fillstyle='full', markeredgewidth=0.1)
-
-    # Custom (most of the time bigger) font for the new point to be displayed
-    x, y = m(lon[pstart:pend],lat[pstart:pend])
-    m.plot(x, y,  'ro', alpha=0.8, markersize=65-ARGS.markersize , markeredgecolor='red', 
-              fillstyle='full', markeredgewidth=0.1)
-
-    day = (date[ARGS.npoints].split('T'))[0]
-    #plt.title('Earthquakes above magnitude ' + str(minMagnitudeDesired)  - ' + day)
-    plt.title('Earthquake on ' + day + ' - magnitude ' + str(magn[pend]))
-    #plt.title('Earthquakes')
-
+    PlotEarthquakeLocationsOnMap(m, lon, lat, plt, date, magn)
 
   plt.tight_layout()
 
