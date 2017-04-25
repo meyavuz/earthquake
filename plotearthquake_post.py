@@ -10,19 +10,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.colors import Normalize
 import numpy as np
 
-def ParseInput():
-  ''' Parse input arguments'''
-  import argparse
-  parser = argparse.ArgumentParser()
 
-  parser.add_argument("-markersize", type=float, default=5, help="Marker size to represent the earthquake data on the map")
-  parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph [sweep the whole range for final video output]")
-  parser.add_argument("-nsimpoints", type=int, default=1, help="Number of simultaneous points having different marker size")
-  parser.add_argument("-usgsdata", type=str, help="Filename (e.g. usgs.csv) that contains the earthquake data as downloaded from USGS")
-
-  args = parser.parse_args()
-
-  return args
 
 def WriteCityNames(m):
   ''' Write names of selected cities on the map'''
@@ -112,15 +100,15 @@ def ReadAndGetData(filename):
   #maxLat = max(lat)
   #minLat = min(lat)
 
-  midLat = 0.5*(maxLat + minLat)
-  midLon = 0.5*(maxLon + minLon)
+  #midLat = 0.5*(maxLat + minLat)
+  #midLon = 0.5*(maxLon + minLon)
 
   print "Number of points = ", len(lon)
   print "Latitude (min,max)  = ( ", minLat, " , ", maxLat," )"
   print "Longitude (min,max) = ( ", minLon, " , ", maxLon," )"
-  print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
+  #print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
 
-  return (lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon)
+  return (lat, lon, date, magn, minLon, maxLon, minLat, maxLat)
 
 def UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon):
   ''' Convert the same earthquake data info to Google Map heat map format '''
@@ -164,8 +152,8 @@ def PlotEarthquakeLocationsOnMap(m, lon, lat, plt, date, magn):
     return
 
 
-def SaveSnapshotsToFile(bSaveFigs = True ):
-  ''' Save the earthquale snapshots in time to file'''
+def SaveSnapshotsToFile(bSaveFigs = True):
+  ''' Save the earthquake snapshots in time to file'''
 
   if bSaveFigs:
     OutFolder = 'Snapshots_'+str(ARGS.npoints-ARGS.npoints%100)
@@ -173,19 +161,20 @@ def SaveSnapshotsToFile(bSaveFigs = True ):
       os.mkdir(OutFolder)
 
     plt.savefig(OutFolder+'/earthquakes_dpi240_'+ 
-                str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',
+                str(ARGS.npoints) + '_' + str(ARGS.markersize) + '.png',
                 facecolor='w',dpi=240) 
       
   return
 
-# TODO move midLat/midLon to inside here 
-def DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon):
 
-  #exit()
-  #print "lat =", lat
-  #print "lon =", lon
-  #fig, ax = plt.subplots(figsize=(20,10))
-  #fig, ax = plt.subplots(figsize=(15.6,11.4))
+def DrawMap(minLat, maxLat, minLon, maxLon):
+  ''' Draw the main background map where the earthquake data will be overlayed'''
+
+  midLat = 0.5*(maxLat + minLat)
+  midLon = 0.5*(maxLon + minLon)
+
+  print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
+
   fig, ax = plt.subplots(figsize=(16,9))
   fig.patch.set_facecolor('white') # Set white background
 
@@ -207,8 +196,6 @@ def DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon):
               #width=15.e6,height=15.e6,
               #lat_0=midLat, lon_0=midLon)
 
-  #m = Basemap(height=1.9e6, width=3.8e6,
-  #m = Basemap(height=1.9e6, width=2.6e6,
   m = Basemap(height=1.7e6, width=2.8e6,
             resolution='f',area_thresh=10.,projection='omerc',\
             lon_0=midLon,lat_0=midLat, \
@@ -230,7 +217,9 @@ def DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon):
   m.drawparallels(np.arange(minLat,maxLat,10.))
   m.drawmeridians(np.arange(minLon,maxLon,10.))
 
-  return m
+  plt.tight_layout()
+
+  return (m, midLat, midLon)
 
 
 def main():
@@ -240,9 +229,9 @@ def main():
   # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
 
 
-  lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon = ReadAndGetData(ARGS.usgsdata)
+  lat, lon, date, magn, minLon, maxLon, minLat, maxLat = ReadAndGetData(ARGS.usgsdata)
 
-  m = DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon)
+  m, midLat, midLon = DrawMap(minLat, maxLat, minLon, maxLon)
 
   WriteCityNames(m)
 
@@ -250,16 +239,30 @@ def main():
   if bPlotPoints:
     PlotEarthquakeLocationsOnMap(m, lon, lat, plt, date, magn)
 
-  plt.tight_layout()
+  #plt.show()
 
 
   SaveSnapshotsToFile(True)
     
-  #plt.show()
 
   # This is additional stuff - dumping the heatmap to google maps format 
   UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon)
 
+
+def ParseInput():
+  ''' Parse input arguments'''
+
+  import argparse
+  parser = argparse.ArgumentParser()
+
+  parser.add_argument("-markersize", type=float, default=5, help="Marker size to represent the earthquake data on the map")
+  parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph [sweep the whole range for final video output]")
+  parser.add_argument("-nsimpoints", type=int, default=1, help="Number of simultaneous points having different marker size")
+  parser.add_argument("-usgsdata", type=str, help="Filename (e.g. usgs.csv) that contains the earthquake data as downloaded from USGS")
+
+  args = parser.parse_args()
+
+  return args
 
 # This is the standard boilerplate that calls the main() function.
 if __name__ == '__main__':
