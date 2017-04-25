@@ -164,6 +164,21 @@ def PlotEarthquakeLocationsOnMap(m, lon, lat, plt, date, magn):
     return
 
 
+def SaveSnapshotsToFile(bSaveFigs = True ):
+  ''' Save the earthquale snapshots in time to file'''
+
+  if bSaveFigs:
+    OutFolder = 'Snapshots_'+str(ARGS.npoints-ARGS.npoints%100)
+    if not os.path.exists(OutFolder):
+      os.mkdir(OutFolder)
+
+    plt.savefig(OutFolder+'/earthquakes_dpi240_'+ 
+                str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',
+                facecolor='w',dpi=240) 
+      
+  return
+
+
 def main():
 
   # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
@@ -234,15 +249,8 @@ def main():
 
   plt.tight_layout()
 
-  bSaveFigs = True
-  if bSaveFigs:
-    OutFolder = 'Folder_'+str(ARGS.npoints-ARGS.npoints%100)
-    if not os.path.exists(OutFolder):
-      os.mkdir(OutFolder)
 
-
-    plt.savefig(OutFolder+'/earthquakes_dpi240_'+ str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',facecolor='w',dpi=240)
-    #plt.savefig('earthquakes_dpi240_'+ str(ARGS.npoints)+'_'+ str(ARGS.markersize) +'.png',facecolor='w',dpi=240)
+  SaveSnapshotsToFile(True)
     
   #plt.show()
 
