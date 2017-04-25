@@ -348,9 +348,9 @@ max-module-lines=2000
 
 # String used as indentation unit. This is usually " " (4 spaces) or "\t" (1
 # tab).
-#indent-string='    '
+indent-string='    '
 #yavuz
-indent-string='  '
+#indent-string='  '
 
 # Number of spaces of indent required inside a hanging or continued line.
 indent-after-paren=2
