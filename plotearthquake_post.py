@@ -226,6 +226,21 @@ def DrawMap(minLat, maxLat, minLon, maxLon):
     return (m, midLat, midLon)
 
 
+def ParseInput():
+    ''' Parse input arguments'''
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-markersize", type=float, default=5, help="Marker size to represent the earthquake data on the map")
+    parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph [sweep the whole range for final video output]")
+    parser.add_argument("-nsimpoints", type=int, default=1, help="Number of simultaneous points having different marker size")
+    parser.add_argument("-usgsdata", type=str, help="Filename (e.g. usgs.csv) that contains the earthquake data as downloaded from USGS")
+
+    args = parser.parse_args()
+
+    return args
+
+
 def main():
 
     # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
@@ -252,20 +267,6 @@ def main():
     # This is additional stuff - dumping the heatmap to google maps format 
     UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon)
 
-
-def ParseInput():
-    ''' Parse input arguments'''
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-markersize", type=float, default=5, help="Marker size to represent the earthquake data on the map")
-    parser.add_argument("-npoints", type=int, default=1, help="Total number of points in the graph [sweep the whole range for final video output]")
-    parser.add_argument("-nsimpoints", type=int, default=1, help="Number of simultaneous points having different marker size")
-    parser.add_argument("-usgsdata", type=str, help="Filename (e.g. usgs.csv) that contains the earthquake data as downloaded from USGS")
-
-    args = parser.parse_args()
-
-    return args
 
 # This is the standard boilerplate that calls the main() function.
 if __name__ == '__main__':
