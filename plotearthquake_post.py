@@ -178,19 +178,8 @@ def SaveSnapshotsToFile(bSaveFigs = True ):
       
   return
 
-
-def main():
-
-  # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
-  # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
-  # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
-
-
-  lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon = ReadAndGetData(ARGS.usgsdata)
-
-
-  #exit()
-
+# TODO move midLat/midLon to inside here 
+def DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon):
 
   #exit()
   #print "lat =", lat
@@ -241,6 +230,20 @@ def main():
   m.drawparallels(np.arange(minLat,maxLat,10.))
   m.drawmeridians(np.arange(minLon,maxLon,10.))
 
+  return m
+
+
+def main():
+
+  # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
+  # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
+  # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
+
+
+  lat, lon, date, magn, minLon, maxLon, minLat, maxLat, midLat, midLon = ReadAndGetData(ARGS.usgsdata)
+
+  m = DrawMap(minLat, maxLat, minLon, maxLon, midLat, midLon)
+
   WriteCityNames(m)
 
   bPlotPoints = True
@@ -256,8 +259,6 @@ def main():
 
   # This is additional stuff - dumping the heatmap to google maps format 
   UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon)
-
-
 
 
 # This is the standard boilerplate that calls the main() function.
