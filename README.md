@@ -9,4 +9,5 @@ Plotting earthquake data
 <code> pylint --rcfile=./pylint.rc plotearthquake_post.py</code>
 
 <b> How to run? </b>
+
 <code>./plotearthquake_post.py -markersize 10 -npoints 300 -usgsdata "./USGSData/USGS_Turkey_1900_2017_over6.csv"</code>
