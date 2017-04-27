@@ -199,7 +199,7 @@ class EarthquakeData(object):
 
         return
 
-    def UseGMPLOTtoDumptoGoogleMap(self):
+    def UseGMPLOTtoDumptoGoogleMap(self, htmlfilename):
         ''' Convert the same earthquake data info to Google Map heat map format '''
 
         gmap = gmplot.GoogleMapPlotter(self.midLatitude, self.midLongitude, 3)
@@ -214,7 +214,7 @@ class EarthquakeData(object):
 
         gmap.heatmap(self.latitude, self.longitude)
 
-        gmap.draw("earthquake_test.html")
+        gmap.draw(htmlfilename)
 
         return
 
@@ -222,7 +222,7 @@ class EarthquakeData(object):
         ''' Save the earthquake snapshots in time to file'''
 
         if bSaveFigs:
-            OutFolder = 'Snapshots_'+str(ARGS.npoints-ARGS.npoints%100)
+            OutFolder = 'Snapshots_{}'.format(ARGS.npoints - ARGS.npoints%100)
             if not os.path.exists(OutFolder):
                 os.mkdir(OutFolder)
 
@@ -238,10 +238,10 @@ class EarthquakeData(object):
     def __str__(self):
         ''' Print some data on the earthquake class'''
 
-        str1 = "Number of points = " + str(len(self.longitude))
-        str2 = "Latitude (min,max)  = " + str(self.minLatitude) + " , " + str(self.maxLatitude)
-        str3 = "Longitude (min,max) = " + str(self.minLongitude) + " , " + str(self.maxLongitude)
-        str4 = "Mid (Longitude, Langitude)= " + str(self.midLongitude) + " , " + str(self.midLatitude)
+        str1 = "Number of points = {}".format(len(self.longitude))
+        str2 = "Latitude (min,max) = {}, {}".format(self.minLatitude, self.maxLatitude)
+        str3 = "Longitude (min,max) = {}, {}".format(self.minLongitude, self.maxLongitude)
+        str4 = "Mid points (Longitude, Langitude)= {}, {}".format(self.midLongitude, self.midLatitude)
        
         return '{}\n{}\n{}\n{}\n'.format(str1, str2, str3, str4)    
 
@@ -276,11 +276,10 @@ def main():
     quake.PlotEarthquakeLocationsOnMap(True)
     quake.SaveSnapshotsToFile(True)
 
-    # This is additional stuff - dumping the heatmap to google maps format 
-    quake.UseGMPLOTtoDumptoGoogleMap()
+    # This is a bonus - dumping the earthquake heatmap to google maps format [uses gmplot]
+    quake.UseGMPLOTtoDumptoGoogleMap("earthquake_test.html")
 
-# This is the standard boilerplate that calls the main() function.
-if __name__ == '__main__':
 
+if __name__ == '__main__': # standard boilerplate calling main()
     ARGS = ParseInput()
     main()
