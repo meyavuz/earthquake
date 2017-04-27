@@ -171,7 +171,7 @@ class EarthquakeData(object):
 
         plt.tight_layout()
 
-        return (m, self.midLatitude, self.midLongitude)
+        return (m)
 
     def PlotEarthquakeLocationsOnMap(self, bPlotPoints, mp):
         ''' Just plot the points where the earthquake occurred '''
@@ -273,7 +273,7 @@ def main():
     quake.ReadAndGetData(ARGS.usgsdata)
     print "Quake info: \n", quake
 
-    m, midLat, midLon = quake.DrawMap()
+    m = quake.DrawMap()
 
     WriteCityNamesOnTheMap(m)
 
