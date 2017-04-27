@@ -13,56 +13,6 @@ import numpy as np
 import gmplot
 
 
-def WriteCityNamesOnTheMap(mp):
-    ''' 
-      Write names of selected cities on the map after finding 
-      their corresponding latitude/longitude value
-    '''
-
-    # Lat/lon coordinates of several cities that lie in the map of interest
-    lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90, 
-          44.42, 44.78, 41.32, 36.89, 35.46, 31.20, 32.09,
-          43.60, 33.89, 39.93, 42.13, 31.94, 45.04, 36.20,
-          43.85, 41.11, 31.76, 29.87, 44.61, 38.50, 38.35,
-          36.43, 45.65, 42.26, 38.42, 42.83]
-
-    lons = [28.97, 44.82, 33.42, 24.80, 22.11, 35.39, 41.26, 
-          26.10, 20.44, 19.81, 30.71, 44.38, 29.91, 20.18,
-          39.73, 35.50, 32.85, 24.74, 35.92, 41.96, 37.13,
-          18.41, 16.87, 35.21, 40.10, 33.52, 43.37, 38.33,
-          28.21, 25.60, 42.71, 27.14, 31.70]
-
-    cities = ['Istanbul', 'Tblisi', 'Cyprus', 'Crete', 'Kalamata', 'Adana', 
-              'Erzurum', 'Bucharest', 'Belgrade', 'Tirana', 'Antalya', 
-              'Kerkuk', 'Alexandria', 'Benghazi', 'Sochi', 'Beirut', 
-              'Ankara', 'Plovdiv', 'Amman', 'Stavropol', 'Aleppo', 
-              'Sarajevo', 'Bari', 'Jerusalem', 'Sakaka', 'Sevastopol', 
-              'Van', 'Malatya', 'Rhodes', 'Brasov', 'Kutaisi', 'Izmir',
-              'B  L  A  C  K    S  E  A']
-
-    # Compute the native map projection coordinates for cities.
-    xc, yc = mp(lons, lats)
-
-    # Plot filled circles at the locations of the cities.
-    mp.plot(xc[:-1], yc[:-1], 'bo')
-
-    # Some certain city names need to be shifted for better visualization
-    for name, xpt, ypt in zip(cities, xc, yc):
-        if name == 'Alexandria' or name == 'Crete' or name == 'Van' or name == 'Malatya':
-            plt.text(xpt+10000, ypt-20000, name, fontsize=9)
-        elif name == 'Jerusalem':
-            plt.text(xpt-40000, ypt-30000, name, fontsize=9)
-        elif name == 'Kalamata':
-            plt.text(xpt-30000, ypt+15000, name, fontsize=9)
-        elif name == 'Istanbul' or name == 'Benghazi':
-            plt.text(xpt+20000, ypt-10000, name, fontsize=9)
-        elif name == 'B  L  A  C  K    S  E  A':
-            plt.text(xpt+15000, ypt+10000, name, fontsize=11)
-        else:
-            plt.text(xpt+10000, ypt+10000, name, fontsize=9)
-
-    return
-
 class EarthquakeData(object):
     ''' Class storing & manipulating earthquake data '''
 
@@ -77,6 +27,7 @@ class EarthquakeData(object):
         self.midLongitude = 0.0
         self.date = ''
         self.magnitude = 0.0
+        self.map = Basemap() 
     
     def ReadAndGetData(self, filename):
         ''' 
@@ -102,7 +53,6 @@ class EarthquakeData(object):
                         (df['mag'] >= minMagnitudeDesired)]
 
         filteredDf = df
-        #print "len(new.df) = ", len(filteredDf)
 
         # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list  
         #self.latitude = df.latitude  # Unfiltered
@@ -121,6 +71,9 @@ class EarthquakeData(object):
         # Calculate mid-point for longitudes and latitudes to center the map upon
         self.midLatitude = 0.5*(self.maxLatitude + self.minLatitude)
         self.midLongitude = 0.5*(self.maxLongitude + self.minLongitude)
+
+
+        print "Quake info: \n", self.__str__()
 
 
     def DrawMap(self):
@@ -147,7 +100,7 @@ class EarthquakeData(object):
                     #width=15.e6,height=15.e6,
                     #lat_0=midLat, lon_0=midLon)
 
-        m = Basemap(height=1.7e6, width=2.8e6,
+        self.map = Basemap(height=1.7e6, width=2.8e6,
                   resolution='f', area_thresh=10., projection='omerc',
                   lon_0=self.midLongitude, lat_0=self.midLatitude, 
                   lon_1=self.minLongitude, lat_1=self.minLatitude, 
@@ -159,39 +112,90 @@ class EarthquakeData(object):
         #m.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
           
 
-        m.drawmapboundary(fill_color='#46bcec')
-        m.fillcontinents(color='#f2f2f2', lake_color='#46bcec')
-        m.drawcounties()
-        m.drawcountries(linewidth=0.25)
+        self.map.drawmapboundary(fill_color='#46bcec')
+        self.map.fillcontinents(color='#f2f2f2', lake_color='#46bcec')
+        self.map.drawcounties()
+        self.map.drawcountries(linewidth=0.25)
 
-        m.drawcoastlines()
+        self.map.drawcoastlines()
 
-        m.drawparallels(np.arange(self.minLatitude, self.maxLatitude, 10.))
-        m.drawmeridians(np.arange(self.minLongitude, self.maxLongitude, 10.))
+        self.map.drawparallels(np.arange(self.minLatitude, self.maxLatitude, 10.))
+        self.map.drawmeridians(np.arange(self.minLongitude, self.maxLongitude, 10.))
 
         plt.tight_layout()
 
-        return (m)
+        return 
 
-    def PlotEarthquakeLocationsOnMap(self, bPlotPoints, mp):
+    def PlotEarthquakeLocationsOnMap(self, bPlotPoints):
         ''' Just plot the points where the earthquake occurred '''
         
         if bPlotPoints:
             # Default size for already displayed points
             pstart = ARGS.npoints - ARGS.nsimpoints
             pend = ARGS.npoints
-            x, y = mp(self.longitude[0:pstart], self.latitude[0:pstart])
-            mp.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
+            x, y = self.map(self.longitude[0:pstart], self.latitude[0:pstart])
+            self.map.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
                       fillstyle='full', markeredgewidth=0.1)
 
             # Custom (most of the time bigger) font for the new point to be displayed
-            x, y = mp(self.longitude[pstart:pend], self.latitude[pstart:pend])
-            mp.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
+            x, y = self.map(self.longitude[pstart:pend], self.latitude[pstart:pend])
+            self.map.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
                       fillstyle='full', markeredgewidth=0.1)
 
             day = (self.date[ARGS.npoints].split('T'))[0]
             magnitude = self.magnitude[pend]
             plt.title('Earthquake on ' + day + ' - magnitude ' + str(magnitude))
+
+        return
+
+
+    def WriteCityNamesOnTheMap(self):
+        ''' 
+          Write names of selected cities on the map after finding 
+          their corresponding latitude/longitude value
+        '''
+
+        # Lat/lon coordinates of several cities that lie in the map of interest
+        lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90, 
+              44.42, 44.78, 41.32, 36.89, 35.46, 31.20, 32.09,
+              43.60, 33.89, 39.93, 42.13, 31.94, 45.04, 36.20,
+              43.85, 41.11, 31.76, 29.87, 44.61, 38.50, 38.35,
+              36.43, 45.65, 42.26, 38.42, 42.83]
+
+        lons = [28.97, 44.82, 33.42, 24.80, 22.11, 35.39, 41.26, 
+              26.10, 20.44, 19.81, 30.71, 44.38, 29.91, 20.18,
+              39.73, 35.50, 32.85, 24.74, 35.92, 41.96, 37.13,
+              18.41, 16.87, 35.21, 40.10, 33.52, 43.37, 38.33,
+              28.21, 25.60, 42.71, 27.14, 31.70]
+
+        cities = ['Istanbul', 'Tblisi', 'Cyprus', 'Crete', 'Kalamata', 'Adana', 
+                  'Erzurum', 'Bucharest', 'Belgrade', 'Tirana', 'Antalya', 
+                  'Kerkuk', 'Alexandria', 'Benghazi', 'Sochi', 'Beirut', 
+                  'Ankara', 'Plovdiv', 'Amman', 'Stavropol', 'Aleppo', 
+                  'Sarajevo', 'Bari', 'Jerusalem', 'Sakaka', 'Sevastopol', 
+                  'Van', 'Malatya', 'Rhodes', 'Brasov', 'Kutaisi', 'Izmir',
+                  'B  L  A  C  K    S  E  A']
+
+        # Compute the native map projection coordinates for cities.
+        xc, yc = self.map(lons, lats)
+
+        # Plot filled circles at the locations of the cities.
+        self.map.plot(xc[:-1], yc[:-1], 'bo')
+
+        # Some certain city names need to be shifted for better visualization
+        for name, xpt, ypt in zip(cities, xc, yc):
+            if name == 'Alexandria' or name == 'Crete' or name == 'Van' or name == 'Malatya':
+                plt.text(xpt+10000, ypt-20000, name, fontsize=9)
+            elif name == 'Jerusalem':
+                plt.text(xpt-40000, ypt-30000, name, fontsize=9)
+            elif name == 'Kalamata':
+                plt.text(xpt-30000, ypt+15000, name, fontsize=9)
+            elif name == 'Istanbul' or name == 'Benghazi':
+                plt.text(xpt+20000, ypt-10000, name, fontsize=9)
+            elif name == 'B  L  A  C  K    S  E  A':
+                plt.text(xpt+15000, ypt+10000, name, fontsize=11)
+            else:
+                plt.text(xpt+10000, ypt+10000, name, fontsize=9)
 
         return
 
@@ -214,6 +218,22 @@ class EarthquakeData(object):
 
         return
 
+    def SaveSnapshotsToFile(self, bSaveFigs=True):
+        ''' Save the earthquake snapshots in time to file'''
+
+        if bSaveFigs:
+            OutFolder = 'Snapshots_'+str(ARGS.npoints-ARGS.npoints%100)
+            if not os.path.exists(OutFolder):
+                os.mkdir(OutFolder)
+
+            plt.savefig(OutFolder+'/earthquakes_dpi240_'+ 
+                      str(ARGS.npoints) + '_' + str(ARGS.markersize) + '.png',
+                      facecolor='w', dpi=240) 
+        else:
+            plt.show()
+            
+        return
+
 
     def __str__(self):
         ''' Print some data on the earthquake class'''
@@ -224,27 +244,6 @@ class EarthquakeData(object):
         str4 = "Mid (Longitude, Langitude)= " + str(self.midLongitude) + " , " + str(self.midLatitude)
        
         return '{}\n{}\n{}\n{}\n'.format(str1, str2, str3, str4)    
-
-
-
-
-
-def SaveSnapshotsToFile(bSaveFigs=True):
-    ''' Save the earthquake snapshots in time to file'''
-
-    if bSaveFigs:
-        OutFolder = 'Snapshots_'+str(ARGS.npoints-ARGS.npoints%100)
-        if not os.path.exists(OutFolder):
-            os.mkdir(OutFolder)
-
-        plt.savefig(OutFolder+'/earthquakes_dpi240_'+ 
-                  str(ARGS.npoints) + '_' + str(ARGS.markersize) + '.png',
-                  facecolor='w', dpi=240) 
-        
-    return
-
-
-
 
 
 def ParseInput():
@@ -271,20 +270,14 @@ def main():
 
     quake = EarthquakeData();
     quake.ReadAndGetData(ARGS.usgsdata)
-    print "Quake info: \n", quake
 
-    m = quake.DrawMap()
-
-    WriteCityNamesOnTheMap(m)
-
-    quake.PlotEarthquakeLocationsOnMap(True, m)
-
-    #plt.show()
-    SaveSnapshotsToFile(True)
+    quake.DrawMap()
+    quake.WriteCityNamesOnTheMap()
+    quake.PlotEarthquakeLocationsOnMap(True)
+    quake.SaveSnapshotsToFile(True)
 
     # This is additional stuff - dumping the heatmap to google maps format 
     quake.UseGMPLOTtoDumptoGoogleMap()
-
 
 # This is the standard boilerplate that calls the main() function.
 if __name__ == '__main__':
