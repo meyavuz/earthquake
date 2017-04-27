@@ -13,9 +13,11 @@ import numpy as np
 import gmplot
 
 
-
-def WriteCityNames(mp):
-    ''' Write names of selected cities on the map'''
+def WriteCityNamesOnTheMap(mp):
+    ''' 
+      Write names of selected cities on the map after finding 
+      their corresponding latitude/longitude value
+    '''
 
     # Lat/lon coordinates of several cities that lie in the map of interest
     lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90, 
@@ -61,98 +63,170 @@ def WriteCityNames(mp):
 
     return
 
-def ReadAndGetData(filename):
-    ''' 
-    Reads the data file downloaded from the USGS site and filters as necessary 
-    (e.g. only accept earthquakes with magnitude greater than 5 etc)
-    '''
+class EarthquakeData(object):
+    ''' Class storing & manipulating earthquake data '''
 
-    # Use pandas to get the USGS data content
-    df = pd.read_csv(filename)  # e.g. filename:  USGS_americas_1950_2017_over6.csv
-
-    # Use hardcoded min/max Longitude/Latitude for the specific map output
-    minLon, maxLon = (18.81, 51.327)
-    minLat, maxLat = (29.155, 47.883)
+    def __init__(self):
+        self.latitude = []
+        self.longitude = []
+        self.minLatitude = 0.0
+        self.maxLatitude = 0.0
+        self.minLongitude = 0.0
+        self.maxLongitude = 0.0
+        self.midLatitude = 0.0
+        self.midLongitude = 0.0
+        self.date = ''
+        self.magnitude = 0.0
     
-    # Filter data & get only thos larget than 5.0 magnitude
-    minMagnitudeDesired = 5.0
+    def ReadAndGetData(self, filename):
+        ''' 
+        Reads the data file downloaded from the USGS site and filters as necessary 
+        (e.g. only accept earthquakes with magnitude greater than 5 etc)
+        '''
 
-    filteredDf = df[(df['latitude'] >= minLat) & 
-                    (df['latitude'] <= maxLat) &
-                    (df['longitude'] >= minLon-3.4) &
-                    (df['longitude'] <= maxLon-0.7) &
-                    (df['mag'] >= minMagnitudeDesired)]
+        # Use pandas to get the USGS data content
+        df = pd.read_csv(filename)  # e.g. filename:  USGS_americas_1950_2017_over6.csv
 
-    filteredDf = df
-    #print "len(new.df) = ", len(filteredDf)
+        # Use hardcoded min/max Longitude/Latitude for the specific map output
+        # One can also use other min/max values (up to the user)
+        self.minLongitude, self.maxLongitude = (18.81, 51.327)
+        self.minLatitude, self.maxLatitude = (29.155, 47.883)
+        
+        # Filter data & get only thos larget than 5.0 magnitude
+        minMagnitudeDesired = 5.0
 
-    # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list  
-    #lat = df.latitude  # Unfiltered
-    #lon = df.longitude
-    lat = (filteredDf.latitude).values.tolist()
-    lon = (filteredDf.longitude).values.tolist()
-    date = (filteredDf.time).values.tolist()
-    magn = (filteredDf.mag).values.tolist()
+        filteredDf = df[(df['latitude'] >= self.minLatitude) & 
+                        (df['latitude'] <= self.maxLatitude) &
+                        (df['longitude'] >= self.minLongitude - 3.4) &
+                        (df['longitude'] <= self.maxLongitude - 0.7) &
+                        (df['mag'] >= minMagnitudeDesired)]
 
-    #print " lat = ", lat, " len(lat) = ", len(lat)
-    #print " lat[0] =", lat[0]
-    
-    # If you don't want filtering, then min/max can be obtained from the read data
-    #maxLon = max(lon)
-    #minLon = min(lon)
-    #maxLat = max(lat)
-    #minLat = min(lat)
+        filteredDf = df
+        #print "len(new.df) = ", len(filteredDf)
 
-    #midLat = 0.5*(maxLat + minLat)
-    #midLon = 0.5*(maxLon + minLon)
+        # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list  
+        #self.latitude = df.latitude  # Unfiltered
+        #self.longitude = df.longitude
+        self.latitude = (filteredDf.latitude).values.tolist()
+        self.longitude = (filteredDf.longitude).values.tolist()
+        self.date = (filteredDf.time).values.tolist()
+        self.magnitude = (filteredDf.mag).values.tolist()
 
-    print "Number of points = ", len(lon)
-    print "Latitude (min,max)  = ( ", minLat, " , ", maxLat, " )"
-    print "Longitude (min,max) = ( ", minLon, " , ", maxLon, " )"
-    #print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat," )"
+        # If you don't want filtering, then min/max can be obtained from the read data
+        #maxLon = max(lon)
+        #minLon = min(lon)
+        #maxLat = max(lat)
+        #minLat = min(lat)
 
-    return (lat, lon, date, magn, minLon, maxLon, minLat, maxLat)
+        # Calculate mid-point for longitudes and latitudes to center the map upon
+        self.midLatitude = 0.5*(self.maxLatitude + self.minLatitude)
+        self.midLongitude = 0.5*(self.maxLongitude + self.minLongitude)
 
-def UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon):
-    ''' Convert the same earthquake data info to Google Map heat map format '''
 
-    gmap = gmplot.GoogleMapPlotter(midLat, midLon, 3)
-    print "gmap = ", gmap
+    def DrawMap(self):
+        ''' Draw the main background map where the earthquake data will be overlayed'''
 
-    # Some other options using gmplot
-    #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
-    #gmap.plot(latitudes, longitudes, 'red', edge_width=8)
-    #gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
-    #gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
-    #gmap.scatter(lat, lon, 'r', size=10, marker=False)
+        fig, ax = plt.subplots(figsize=(16, 9))
+        fig.patch.set_facecolor('white') # Set white background
 
-    gmap.heatmap(lat, lon)
+        ##m = Basemap(resolution='c', # c(crude), l(low), i)intermediate), h(high), f(full) or None
+        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
+                    #projection='merc',
+                    ##lat_0=40.320373, lon_0=-74.43,
+                    ##llcrnrlon=-75.00, llcrnrlat= 40.0000, urcrnrlon=-72.00, urcrnrlat=42.000 )
+                    #lat_0=40.320373, lon_0=-74.43,
+                    #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat )
 
-    gmap.draw("earthquake_test.html")
+        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
+                    #projection='ortho',
+                    #lat_0=midLat, lon_0=midLon)
 
-    return
 
-def PlotEarthquakeLocationsOnMap(mp, lon, lat, date, magn):
-    ''' Just plot the points where the earthquake occurred '''
+        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
+                    #projection='gnom',
+                    #width=15.e6,height=15.e6,
+                    #lat_0=midLat, lon_0=midLon)
 
-    # Default size for already displayed points
-    pstart = ARGS.npoints - ARGS.nsimpoints
-    pend = ARGS.npoints
-    x, y = mp(lon[0:pstart], lat[0:pstart])
-    mp.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
-              fillstyle='full', markeredgewidth=0.1)
+        m = Basemap(height=1.7e6, width=2.8e6,
+                  resolution='f', area_thresh=10., projection='omerc',
+                  lon_0=self.midLongitude, lat_0=self.midLatitude, 
+                  lon_1=self.minLongitude, lat_1=self.minLatitude, 
+                  lon_2=self.maxLongitude, lat_2=self.maxLatitude)
 
-    # Custom (most of the time bigger) font for the new point to be displayed
-    x, y = mp(lon[pstart:pend], lat[pstart:pend])
-    mp.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
-              fillstyle='full', markeredgewidth=0.1)
+        #m = Basemap(projection='mill', resolution='h',\
+              #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat, \
+              #epsg = 4269)
+        #m.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
+          
 
-    day = (date[ARGS.npoints].split('T'))[0]
-    #plt.title('Earthquakes above magnitude ' + str(minMagnitudeDesired)  - ' + day)
-    plt.title('Earthquake on ' + day + ' - magnitude ' + str(magn[pend]))
-    #plt.title('Earthquakes')
+        m.drawmapboundary(fill_color='#46bcec')
+        m.fillcontinents(color='#f2f2f2', lake_color='#46bcec')
+        m.drawcounties()
+        m.drawcountries(linewidth=0.25)
 
-    return
+        m.drawcoastlines()
+
+        m.drawparallels(np.arange(self.minLatitude, self.maxLatitude, 10.))
+        m.drawmeridians(np.arange(self.minLongitude, self.maxLongitude, 10.))
+
+        plt.tight_layout()
+
+        return (m, self.midLatitude, self.midLongitude)
+
+    def PlotEarthquakeLocationsOnMap(self, bPlotPoints, mp):
+        ''' Just plot the points where the earthquake occurred '''
+        
+        if bPlotPoints:
+            # Default size for already displayed points
+            pstart = ARGS.npoints - ARGS.nsimpoints
+            pend = ARGS.npoints
+            x, y = mp(self.longitude[0:pstart], self.latitude[0:pstart])
+            mp.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
+                      fillstyle='full', markeredgewidth=0.1)
+
+            # Custom (most of the time bigger) font for the new point to be displayed
+            x, y = mp(self.longitude[pstart:pend], self.latitude[pstart:pend])
+            mp.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
+                      fillstyle='full', markeredgewidth=0.1)
+
+            day = (self.date[ARGS.npoints].split('T'))[0]
+            magnitude = self.magnitude[pend]
+            plt.title('Earthquake on ' + day + ' - magnitude ' + str(magnitude))
+
+        return
+
+    def UseGMPLOTtoDumptoGoogleMap(self):
+        ''' Convert the same earthquake data info to Google Map heat map format '''
+
+        gmap = gmplot.GoogleMapPlotter(self.midLatitude, self.midLongitude, 3)
+        print "gmap = ", gmap
+
+        # Some other options using gmplot
+        #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
+        #gmap.plot(latitudes, longitudes, 'red', edge_width=8)
+        #gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
+        #gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
+        #gmap.scatter(lat, lon, 'r', size=10, marker=False)
+
+        gmap.heatmap(self.latitude, self.longitude)
+
+        gmap.draw("earthquake_test.html")
+
+        return
+
+
+    def __str__(self):
+        ''' Print some data on the earthquake class'''
+
+        str1 = "Number of points = " + str(len(self.longitude))
+        str2 = "Latitude (min,max)  = " + str(self.minLatitude) + " , " + str(self.maxLatitude)
+        str3 = "Longitude (min,max) = " + str(self.minLongitude) + " , " + str(self.maxLongitude)
+        str4 = "Mid (Longitude, Langitude)= " + str(self.midLongitude) + " , " + str(self.midLatitude)
+       
+        return '{}\n{}\n{}\n{}\n'.format(str1, str2, str3, str4)    
+
+
+
 
 
 def SaveSnapshotsToFile(bSaveFigs=True):
@@ -170,64 +244,11 @@ def SaveSnapshotsToFile(bSaveFigs=True):
     return
 
 
-def DrawMap(minLat, maxLat, minLon, maxLon):
-    ''' Draw the main background map where the earthquake data will be overlayed'''
 
-    # Calculate mid-point for longitudes and latitudes to center the map upon
-    midLat = 0.5*(maxLat + minLat)
-    midLon = 0.5*(maxLon + minLon)
-
-    print "Mid (Longitude, Langitude)= ( ", midLon, " , ", midLat, " )"
-
-    fig, ax = plt.subplots(figsize=(16, 9))
-    fig.patch.set_facecolor('white') # Set white background
-
-    ##m = Basemap(resolution='c', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-    #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                #projection='merc',
-                ##lat_0=40.320373, lon_0=-74.43,
-                ##llcrnrlon=-75.00, llcrnrlat= 40.0000, urcrnrlon=-72.00, urcrnrlat=42.000 )
-                #lat_0=40.320373, lon_0=-74.43,
-                #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat )
-
-    #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                #projection='ortho',
-                #lat_0=midLat, lon_0=midLon)
-
-
-    #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                #projection='gnom',
-                #width=15.e6,height=15.e6,
-                #lat_0=midLat, lon_0=midLon)
-
-    m = Basemap(height=1.7e6, width=2.8e6,
-              resolution='f', area_thresh=10., projection='omerc',
-              lon_0=midLon, lat_0=midLat, 
-              lon_1=minLon, lat_1=minLat, lon_2=maxLon, lat_2=maxLat)
-
-    #m = Basemap(projection='mill', resolution='h',\
-          #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat, \
-          #epsg = 4269)
-    #m.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
-      
-
-    m.drawmapboundary(fill_color='#46bcec')
-    m.fillcontinents(color='#f2f2f2', lake_color='#46bcec')
-    m.drawcounties()
-    m.drawcountries(linewidth=0.25)
-
-    m.drawcoastlines()
-
-    m.drawparallels(np.arange(minLat, maxLat, 10.))
-    m.drawmeridians(np.arange(minLon, maxLon, 10.))
-
-    plt.tight_layout()
-
-    return (m, midLat, midLon)
 
 
 def ParseInput():
-    ''' Parse input arguments'''
+    ''' Parse input arguments '''
 
     parser = argparse.ArgumentParser()
 
@@ -246,31 +267,27 @@ def main():
     # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
     # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
     # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
+    #lat, lon, date, magn, minLon, maxLon, minLat, maxLat = ReadAndGetData(ARGS.usgsdata)
 
+    quake = EarthquakeData();
+    quake.ReadAndGetData(ARGS.usgsdata)
+    print "Quake info: \n", quake
 
-    lat, lon, date, magn, minLon, maxLon, minLat, maxLat = ReadAndGetData(ARGS.usgsdata)
+    m, midLat, midLon = quake.DrawMap()
 
-    m, midLat, midLon = DrawMap(minLat, maxLat, minLon, maxLon)
+    WriteCityNamesOnTheMap(m)
 
-    WriteCityNames(m)
-
-    bPlotPoints = True
-    if bPlotPoints:
-        PlotEarthquakeLocationsOnMap(m, lon, lat, date, magn)
+    quake.PlotEarthquakeLocationsOnMap(True, m)
 
     #plt.show()
-
-
     SaveSnapshotsToFile(True)
-      
 
     # This is additional stuff - dumping the heatmap to google maps format 
-    UseGMPLOTtoDumptoGoogleMap(lat, lon, midLat, midLon)
+    quake.UseGMPLOTtoDumptoGoogleMap()
 
 
 # This is the standard boilerplate that calls the main() function.
 if __name__ == '__main__':
 
     ARGS = ParseInput()
-
     main()
