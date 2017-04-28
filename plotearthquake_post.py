@@ -135,16 +135,16 @@ class EarthquakeData(object):
             pend = ARGS.npoints
             x, y = self.map(self.longitude[0:pstart], self.latitude[0:pstart])
             self.map.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
-                      fillstyle='full', markeredgewidth=0.1)
+                          fillstyle='full', markeredgewidth=0.1)
 
             # Custom (most of the time bigger) font for the new point to be displayed
             x, y = self.map(self.longitude[pstart:pend], self.latitude[pstart:pend])
             self.map.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
-                      fillstyle='full', markeredgewidth=0.1)
+                          fillstyle='full', markeredgewidth=0.1)
 
             day = (self.date[ARGS.npoints].split('T'))[0]
             magnitude = self.magnitude[pend]
-            plt.title('Earthquake on ' + day + ' - magnitude ' + str(magnitude))
+            plt.title('Earthquake on {} - magnitude {}'.format(day, magnitude))
 
         return
 
@@ -203,7 +203,7 @@ class EarthquakeData(object):
         ''' Convert the same earthquake data info to Google Map heat map format '''
 
         gmap = gmplot.GoogleMapPlotter(self.midLatitude, self.midLongitude, 3)
-        print "gmap = ", gmap
+        #print "gmap = ", gmap
 
         # Some other options using gmplot
         #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
@@ -226,9 +226,8 @@ class EarthquakeData(object):
             if not os.path.exists(OutFolder):
                 os.mkdir(OutFolder)
 
-            plt.savefig(OutFolder+'/earthquakes_dpi240_'+ 
-                      str(ARGS.npoints) + '_' + str(ARGS.markersize) + '.png',
-                      facecolor='w', dpi=240) 
+            outpngfilename = '{}/earthquakes_dpi240_{}_{}.png'.format(OutFolder, ARGS.npoints, ARGS.markersize)
+            plt.savefig(outpngfilename, facecolor='w', dpi=240) 
         else:
             plt.show()
             
@@ -263,11 +262,6 @@ def ParseInput():
 
 def main():
 
-    # Refer this page: http://www.datadependence.com/2016/06/creating-map-visualisations-in-python/
-    # Data downloaded from https://earthquake.usgs.gov/earthquakes/search/
-    # A small tutorial : https://peak5390.wordpress.com/2012/12/08/matplotlib-basemap-tutorial-plotting-global-earthquake-activity/
-    #lat, lon, date, magn, minLon, maxLon, minLat, maxLat = ReadAndGetData(ARGS.usgsdata)
-
     quake = EarthquakeData();
     quake.ReadAndGetData(ARGS.usgsdata)
 
@@ -276,7 +270,7 @@ def main():
     quake.PlotEarthquakeLocationsOnMap(True)
     quake.SaveSnapshotsToFile(True)
 
-    # This is a bonus - dumping the earthquake heatmap to google maps format [uses gmplot]
+    # This is a bonus feature - dumping the earthquake heatmap to google maps format [uses gmplot]
     quake.UseGMPLOTtoDumptoGoogleMap("earthquake_test.html")
 
 
