@@ -77,40 +77,26 @@ class EarthquakeData(object):
 
 
     def DrawMap(self):
-        ''' Draw the main background map where the earthquake data will be overlayed'''
+        ''' Draw the main background map where the earthquake data will be overlayed
+
+        Some other options to check for: 
+        self.map = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
+                    projection='merc', # 'ortho', 'gnom', 'mill'
+                    lat_0=40.320373, lon_0=-74.43,
+                    llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat )
+
+        # It is also possible to download arcgis images through the following command 
+        self.map.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
+        '''
 
         fig, ax = plt.subplots(figsize=(16, 9))
         fig.patch.set_facecolor('white') # Set white background
-
-        ##m = Basemap(resolution='c', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                    #projection='merc',
-                    ##lat_0=40.320373, lon_0=-74.43,
-                    ##llcrnrlon=-75.00, llcrnrlat= 40.0000, urcrnrlon=-72.00, urcrnrlat=42.000 )
-                    #lat_0=40.320373, lon_0=-74.43,
-                    #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat )
-
-        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                    #projection='ortho',
-                    #lat_0=midLat, lon_0=midLon)
-
-
-        #m = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
-                    #projection='gnom',
-                    #width=15.e6,height=15.e6,
-                    #lat_0=midLat, lon_0=midLon)
 
         self.map = Basemap(height=1.7e6, width=2.8e6,
                   resolution='f', area_thresh=10., projection='omerc',
                   lon_0=self.midLongitude, lat_0=self.midLatitude, 
                   lon_1=self.minLongitude, lat_1=self.minLatitude, 
                   lon_2=self.maxLongitude, lat_2=self.maxLatitude)
-
-        #m = Basemap(projection='mill', resolution='h',\
-              #llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat, \
-              #epsg = 4269)
-        #m.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
-          
 
         self.map.drawmapboundary(fill_color='#46bcec')
         self.map.fillcontinents(color='#f2f2f2', lake_color='#46bcec')
@@ -151,8 +137,8 @@ class EarthquakeData(object):
 
     def WriteCityNamesOnTheMap(self):
         ''' 
-          Write names of selected cities on the map after finding 
-          their corresponding latitude/longitude value
+        Write names of selected cities on the map after finding 
+        their corresponding latitude/longitude value
         '''
 
         # Lat/lon coordinates of several cities that lie in the map of interest
@@ -195,22 +181,22 @@ class EarthquakeData(object):
             elif name == 'B  L  A  C  K    S  E  A':
                 plt.text(xpt+15000, ypt+10000, name, fontsize=11)
             else:
-                plt.text(xpt+10000, ypt+10000, name, fontsize=9)
+                plt.text(xpt+10000, ypt+10000, name, fontsize=9) # Default visualization
 
         return
 
     def UseGMPLOTtoDumptoGoogleMap(self, htmlfilename):
-        ''' Convert the same earthquake data info to Google Map heat map format '''
-
-        gmap = gmplot.GoogleMapPlotter(self.midLatitude, self.midLongitude, 3)
-        #print "gmap = ", gmap
+        ''' Convert the same earthquake data info to Google Map heat map format 
 
         # Some other options using gmplot
-        #gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
-        #gmap.plot(latitudes, longitudes, 'red', edge_width=8)
-        #gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
-        #gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
-        #gmap.scatter(lat, lon, 'r', size=10, marker=False)
+        gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
+        gmap.plot(latitudes, longitudes, 'red', edge_width=8)
+        gmap.scatter(more_lats, more_lngs, '#3B0B39', size=40, marker=False)
+        gmap.scatter(marker_lats, marker_lngs, 'k', marker=True)
+        gmap.scatter(lat, lon, 'r', size=10, marker=False)
+        '''
+
+        gmap = gmplot.GoogleMapPlotter(self.midLatitude, self.midLongitude, 3) # lat/lon/google map zoom level
 
         gmap.heatmap(self.latitude, self.longitude)
 
@@ -218,15 +204,20 @@ class EarthquakeData(object):
 
         return
 
-    def SaveSnapshotsToFile(self, bSaveFigs=True):
-        ''' Save the earthquake snapshots in time to file'''
+    def SaveSnapshotsToFile(self, bSaveFigs=True, snapshotfilename='earthquakes_dpi240'):
+        ''' 
+        Save the earthquake snapshots in time to file
+        Note that for (16,9) sized figure, dpi=120 gives (16,9)*120 =[1920,1080] pixels png file
+        Similarly, dpi=240 gives (16,9)*240 =[3840,2160] pixels png file
+        '''
 
         if bSaveFigs:
             OutFolder = 'Snapshots_{}'.format(ARGS.npoints - ARGS.npoints%100)
             if not os.path.exists(OutFolder):
                 os.mkdir(OutFolder)
 
-            outpngfilename = '{}/earthquakes_dpi240_{}_{}.png'.format(OutFolder, ARGS.npoints, ARGS.markersize)
+            outpngfilename = '{}/{}_{}_{}.png'.format(OutFolder, snapshotfilename,
+                                                      ARGS.npoints, ARGS.markersize)
             plt.savefig(outpngfilename, facecolor='w', dpi=240) 
         else:
             plt.show()
