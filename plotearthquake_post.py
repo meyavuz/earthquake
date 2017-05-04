@@ -5,10 +5,6 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-#import matplotlib.cm
-#from matplotlib.patches import Polygon
-#from matplotlib.collections import PatchCollection
-#from matplotlib.colors import Normalize
 import numpy as np
 import gmplot
 
@@ -63,15 +59,14 @@ class EarthquakeData(object):
         self.magnitude = (filteredDf.mag).values.tolist()
 
         # If you don't want filtering, then min/max can be obtained from the read data
-        #maxLon = max(lon)
-        #minLon = min(lon)
-        #maxLat = max(lat)
-        #minLat = min(lat)
+        #self.minLongitude = min(self.longitude)
+        #self.maxLongitude = max(self.longitude)
+        #self.minLatitude = min(self.latitude)
+        #self.maxLatitude = max(self.latitude)
 
         # Calculate mid-point for longitudes and latitudes to center the map upon
         self.midLatitude = 0.5*(self.maxLatitude + self.minLatitude)
         self.midLongitude = 0.5*(self.maxLongitude + self.minLongitude)
-
 
         print "Quake info: \n", self.__str__()
 
@@ -116,7 +111,8 @@ class EarthquakeData(object):
         ''' Just plot the points where the earthquake occurred '''
         
         if bPlotPoints:
-            # Default size for already displayed points
+            # Default size for already displayed points (in a time-lapse fashion, some points 
+            # have already been displayed as shrinking points - at this stage only show shrunk versions)
             pstart = ARGS.npoints - ARGS.nsimpoints
             pend = ARGS.npoints
             x, y = self.map(self.longitude[0:pstart], self.latitude[0:pstart])
@@ -187,6 +183,7 @@ class EarthquakeData(object):
 
     def UseGMPLOTtoDumptoGoogleMap(self, htmlfilename):
         ''' Convert the same earthquake data info to Google Map heat map format 
+            NOTE: gmplot package needs to be pre-installed 
 
         # Some other options using gmplot
         gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
