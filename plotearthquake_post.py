@@ -8,6 +8,10 @@ from mpl_toolkits.basemap import Basemap
 import numpy as np
 import gmplot
 
+# Update 2021_11: Basemap has been deprecated and not possible to install it on the Mac
+# The recommendation is to utilize the Cartopy library instead. The installation of it was
+# also problematic with pip. Recommendation is to utilize conda.
+# However the code needs to be updated from Basemap to Cartopy which will take some time.
 
 class EarthquakeData(object):
     ''' Class storing & manipulating earthquake data '''
@@ -23,11 +27,11 @@ class EarthquakeData(object):
         self.midLongitude = 0.0
         self.date = ''
         self.magnitude = 0.0
-        self.map = Basemap() 
-    
+        self.map = Basemap()
+
     def ReadAndGetData(self, filename):
-        ''' 
-        Reads the data file downloaded from the USGS site and filters as necessary 
+        '''
+        Reads the data file downloaded from the USGS site and filters as necessary
         (e.g. only accept earthquakes with magnitude greater than 5 etc)
         '''
 
@@ -38,11 +42,11 @@ class EarthquakeData(object):
         # One can also use other min/max values (up to the user)
         self.minLongitude, self.maxLongitude = (18.81, 51.327)
         self.minLatitude, self.maxLatitude = (29.155, 47.883)
-        
+
         # Filter data & get only thos larget than 5.0 magnitude
         minMagnitudeDesired = 5.0
 
-        filteredDf = df[(df['latitude'] >= self.minLatitude) & 
+        filteredDf = df[(df['latitude'] >= self.minLatitude) &
                         (df['latitude'] <= self.maxLatitude) &
                         (df['longitude'] >= self.minLongitude - 3.4) &
                         (df['longitude'] <= self.maxLongitude - 0.7) &
@@ -50,7 +54,7 @@ class EarthquakeData(object):
 
         filteredDf = df
 
-        # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list  
+        # Filtered data is in panda dataframe format, use df.values.tolist() to convert to list
         #self.latitude = df.latitude  # Unfiltered
         #self.longitude = df.longitude
         self.latitude = (filteredDf.latitude).values.tolist()
@@ -74,13 +78,13 @@ class EarthquakeData(object):
     def DrawMap(self):
         ''' Draw the main background map where the earthquake data will be overlayed
 
-        Some other options to check for: 
+        Some other options to check for:
         self.map = Basemap(resolution='h', # c(crude), l(low), i)intermediate), h(high), f(full) or None
                     projection='merc', # 'ortho', 'gnom', 'mill'
                     lat_0=40.320373, lon_0=-74.43,
                     llcrnrlon=minLon, llcrnrlat= minLat, urcrnrlon=maxLon, urcrnrlat=maxLat )
 
-        # It is also possible to download arcgis images through the following command 
+        # It is also possible to download arcgis images through the following command
         self.map.arcgisimage(service='World_Physical_Map', xpixels = 5000, verbose= False)
         '''
 
@@ -89,8 +93,8 @@ class EarthquakeData(object):
 
         self.map = Basemap(height=1.7e6, width=2.8e6,
                   resolution='f', area_thresh=10., projection='omerc',
-                  lon_0=self.midLongitude, lat_0=self.midLatitude, 
-                  lon_1=self.minLongitude, lat_1=self.minLatitude, 
+                  lon_0=self.midLongitude, lat_0=self.midLatitude,
+                  lon_1=self.minLongitude, lat_1=self.minLatitude,
                   lon_2=self.maxLongitude, lat_2=self.maxLatitude)
 
         self.map.drawmapboundary(fill_color='#46bcec')
@@ -105,23 +109,23 @@ class EarthquakeData(object):
 
         plt.tight_layout()
 
-        return 
+        return
 
     def PlotEarthquakeLocationsOnMap(self, bPlotPoints):
         ''' Just plot the points where the earthquake occurred '''
-        
+
         if bPlotPoints:
-            # Default size for already displayed points (in a time-lapse fashion, some points 
+            # Default size for already displayed points (in a time-lapse fashion, some points
             # have already been displayed as shrinking points - at this stage only show shrunk versions)
             pstart = ARGS.npoints - ARGS.nsimpoints
             pend = ARGS.npoints
             x, y = self.map(self.longitude[0:pstart], self.latitude[0:pstart])
-            self.map.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red', 
+            self.map.plot(x, y, 'ro', alpha=0.8, markersize=5, markeredgecolor='red',
                           fillstyle='full', markeredgewidth=0.1)
 
             # Custom (most of the time bigger) font for the new point to be displayed
             x, y = self.map(self.longitude[pstart:pend], self.latitude[pstart:pend])
-            self.map.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red', 
+            self.map.plot(x, y, 'ro', alpha=0.8, markersize=65-ARGS.markersize, markeredgecolor='red',
                           fillstyle='full', markeredgewidth=0.1)
 
             day = (self.date[ARGS.npoints].split('T'))[0]
@@ -132,29 +136,29 @@ class EarthquakeData(object):
 
 
     def WriteCityNamesOnTheMap(self):
-        ''' 
-        Write names of selected cities on the map after finding 
+        '''
+        Write names of selected cities on the map after finding
         their corresponding latitude/longitude value
         '''
 
         # Lat/lon coordinates of several cities that lie in the map of interest
-        lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90, 
+        lats = [41.00, 41.71, 35.12, 35.24, 37.04, 37.26, 39.90,
               44.42, 44.78, 41.32, 36.89, 35.46, 31.20, 32.09,
               43.60, 33.89, 39.93, 42.13, 31.94, 45.04, 36.20,
               43.85, 41.11, 31.76, 29.87, 44.61, 38.50, 38.35,
               36.43, 45.65, 42.26, 38.42, 42.83]
 
-        lons = [28.97, 44.82, 33.42, 24.80, 22.11, 35.39, 41.26, 
+        lons = [28.97, 44.82, 33.42, 24.80, 22.11, 35.39, 41.26,
               26.10, 20.44, 19.81, 30.71, 44.38, 29.91, 20.18,
               39.73, 35.50, 32.85, 24.74, 35.92, 41.96, 37.13,
               18.41, 16.87, 35.21, 40.10, 33.52, 43.37, 38.33,
               28.21, 25.60, 42.71, 27.14, 31.70]
 
-        cities = ['Istanbul', 'Tblisi', 'Cyprus', 'Crete', 'Kalamata', 'Adana', 
-                  'Erzurum', 'Bucharest', 'Belgrade', 'Tirana', 'Antalya', 
-                  'Kerkuk', 'Alexandria', 'Benghazi', 'Sochi', 'Beirut', 
-                  'Ankara', 'Plovdiv', 'Amman', 'Stavropol', 'Aleppo', 
-                  'Sarajevo', 'Bari', 'Jerusalem', 'Sakaka', 'Sevastopol', 
+        cities = ['Istanbul', 'Tblisi', 'Cyprus', 'Crete', 'Kalamata', 'Adana',
+                  'Erzurum', 'Bucharest', 'Belgrade', 'Tirana', 'Antalya',
+                  'Kerkuk', 'Alexandria', 'Benghazi', 'Sochi', 'Beirut',
+                  'Ankara', 'Plovdiv', 'Amman', 'Stavropol', 'Aleppo',
+                  'Sarajevo', 'Bari', 'Jerusalem', 'Sakaka', 'Sevastopol',
                   'Van', 'Malatya', 'Rhodes', 'Brasov', 'Kutaisi', 'Izmir',
                   'B  L  A  C  K    S  E  A']
 
@@ -182,8 +186,8 @@ class EarthquakeData(object):
         return
 
     def UseGMPLOTtoDumptoGoogleMap(self, htmlfilename):
-        ''' Convert the same earthquake data info to Google Map heat map format 
-            NOTE: gmplot package needs to be pre-installed 
+        ''' Convert the same earthquake data info to Google Map heat map format
+            NOTE: gmplot package needs to be pre-installed
 
         # Some other options using gmplot
         gmap.plot(latitudes, longitudes, 'cornflowerblue', edge_width=10)
@@ -202,7 +206,7 @@ class EarthquakeData(object):
         return
 
     def SaveSnapshotsToFile(self, bSaveFigs=True, snapshotfilename='earthquakes_dpi240'):
-        ''' 
+        '''
         Save the earthquake snapshots in time to file
         Note that for (16,9) sized figure, dpi=120 gives (16,9)*120 =[1920,1080] pixels png file
         Similarly, dpi=240 gives (16,9)*240 =[3840,2160] pixels png file
@@ -215,10 +219,10 @@ class EarthquakeData(object):
 
             outpngfilename = '{}/{}_{}_{}.png'.format(OutFolder, snapshotfilename,
                                                       ARGS.npoints, ARGS.markersize)
-            plt.savefig(outpngfilename, facecolor='w', dpi=240) 
+            plt.savefig(outpngfilename, facecolor='w', dpi=240)
         else:
             plt.show()
-            
+
         return
 
 
@@ -229,8 +233,8 @@ class EarthquakeData(object):
         str2 = "Latitude (min,max) = {}, {}".format(self.minLatitude, self.maxLatitude)
         str3 = "Longitude (min,max) = {}, {}".format(self.minLongitude, self.maxLongitude)
         str4 = "Mid points (Longitude, Langitude)= {}, {}".format(self.midLongitude, self.midLatitude)
-       
-        return '{}\n{}\n{}\n{}\n'.format(str1, str2, str3, str4)    
+
+        return '{}\n{}\n{}\n{}\n'.format(str1, str2, str3, str4)
 
 
 def ParseInput():
