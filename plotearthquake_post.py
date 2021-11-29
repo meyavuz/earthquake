@@ -72,7 +72,7 @@ class EarthquakeData(object):
         self.midLatitude = 0.5*(self.maxLatitude + self.minLatitude)
         self.midLongitude = 0.5*(self.maxLongitude + self.minLongitude)
 
-        print "Quake info: \n", self.__str__()
+        print("Quake info: \n", self.__str__())
 
 
     def DrawMap(self):
@@ -252,6 +252,197 @@ def ParseInput():
     return args
 
 
+def testing():
+    # Prettymaps
+    from prettymaps import *
+    # Vsketch
+    # import vsketch
+    # OSMNX
+    import osmnx as ox
+    # Matplotlib-related
+    import matplotlib.font_manager as fm
+    from matplotlib import pyplot as plt
+    from descartes import PolygonPatch
+    # Shapely
+    from shapely.geometry import *
+    from shapely.affinity import *
+    from shapely.ops import unary_union
+
+    def prettymaps_example():
+        """
+        Experimental:
+        https://nbviewer.org/github/marceloprates/prettymaps/blob/main/notebooks/examples.ipynb
+        """
+
+        # Init matplotlib figure
+        fig, ax = plt.subplots(figsize = (12, 12), constrained_layout = True)
+
+        backup = plot(
+            # Address:
+            # 'Praça Ferreira do Amaral, Macau',
+            'Çengelköy Mahallesi, Üsküdar, Istanbul, Marmara Region, 34680, Turkey',
+            # Plot geometries in a circle of radius:
+            radius = 1100,
+            # Matplotlib axis
+            ax = ax,
+            # Which OpenStreetMap layers to plot and their parameters:
+            layers = {
+                    # Perimeter (in this case, a circle)
+                    'perimeter': {},
+                    # Streets and their widths
+                    'streets': {
+                        'width': {
+                            'motorway': 5,
+                            'trunk': 5,
+                            'primary': 4.5,
+                            'secondary': 4,
+                            'tertiary': 3.5,
+                            'residential': 3,
+                            'service': 2,
+                            'unclassified': 2,
+                            'pedestrian': 2,
+                            'footway': 1,
+                        }
+                    },
+                    # Other layers:
+                    #   Specify a name (for example, 'building') and which OpenStreetMap tags to fetch
+                    'building': {'tags': {'building': True, 'landuse': 'construction'}, 'union': False},
+                    'water': {'tags': {'natural': ['water', 'bay']}},
+                    'green': {'tags': {'landuse': 'grass', 'natural': ['island', 'wood'], 'leisure': 'park'}},
+                    'forest': {'tags': {'landuse': 'forest'}},
+                    'parking': {'tags': {'amenity': 'parking', 'highway': 'pedestrian', 'man_made': 'pier'}}
+                },
+                # drawing_kwargs:
+                #   Reference a name previously defined in the 'layers' argument and specify matplotlib parameters to draw it
+                drawing_kwargs = {
+                    'background': {'fc': '#F2F4CB', 'ec': '#dadbc1', 'hatch': 'ooo...', 'zorder': -1},
+                    'perimeter': {'fc': '#F2F4CB', 'ec': '#dadbc1', 'lw': 0, 'hatch': 'ooo...',  'zorder': 0},
+                    'green': {'fc': '#D0F1BF', 'ec': '#2F3737', 'lw': 1, 'zorder': 1},
+                    'forest': {'fc': '#64B96A', 'ec': '#2F3737', 'lw': 1, 'zorder': 1},
+                    'water': {'fc': '#a1e3ff', 'ec': '#2F3737', 'hatch': 'ooo...', 'hatch_c': '#85c9e6', 'lw': 1, 'zorder': 2},
+                    'parking': {'fc': '#F2F4CB', 'ec': '#2F3737', 'lw': 1, 'zorder': 3},
+                    'streets': {'fc': '#2F3737', 'ec': '#475657', 'alpha': 1, 'lw': 0, 'zorder': 3},
+                    'building': {'palette': ['#FFC857', '#E9724C', '#C5283D'], 'ec': '#2F3737', 'lw': .5, 'zorder': 4},
+                }
+        )
+
+        plt.show()
+        return
+
+
+    import plotly.graph_objects as go
+    import plotly.express as px
+
+    def plotly_maps():
+        """
+        This is a nice one with actual open street map with upload/download
+        Need to improve this.
+        https://medium.com/mlearning-ai/earthquakes-data-visualization-5da0d2abeea1
+        """
+
+        def fetch_date(time):
+            return str(time).split(' ')[0]
+
+        def fetch_weekday(time):
+            date = fetch_date(time)
+            return date + ' - ' + str(time.weekday())
+
+        def fetch_hour(time):
+            t = str(time).split(' ')
+            return t[0] + ' - ' + t[1].split(':')[0]
+
+        def subarea_extractor(x):
+            return x[0]
+
+        def area_extractor(x):
+            return x[-1]
+
+        def fetch_quakes_data(manner='daily', bbox='Worldwide', mag_thresh=2):
+            url_link = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{}.csv'
+
+            if (manner == 'weekly'):
+                data_link = url_link.format('all_week')
+            elif (manner == 'monthly'):
+                data_link = url_link.format('all_month')
+            else:
+                data_link = url_link.format('all_day')
+
+            eqdf = pd.read_csv(filepath_or_buffer=data_link)
+            eqdf = eqdf[['time', 'latitude', 'longitude', 'mag', 'place']]
+
+            place_list = eqdf['place'].str.split(', ')
+            eqdf['sub_area'] = place_list.apply(func=subarea_extractor)
+            eqdf['area'] = place_list.apply(func=area_extractor)
+            eqdf = eqdf.drop(columns=['place'], axis=1)
+
+            if isinstance(mag_thresh, int) and (mag_thresh > 0):
+                eqdf = eqdf[eqdf['mag'] >= mag_thresh]
+            else:
+                eqdf = eqdf[eqdf['mag'] > 0]
+
+            if bbox in eqdf['area'].to_list():
+                eqdf = eqdf[eqdf['area'] == bbox]
+                max_mag = eqdf['mag'].max()
+                center_lat = eqdf[eqdf['mag'] == max_mag]['latitude'].values[0]
+                center_lon = eqdf[eqdf['mag'] == max_mag]['longitude'].values[0]
+            else:
+                center_lat, center_lon = [54, 15]
+
+            eqdf['time'] = pd.to_datetime(eqdf['time'])
+
+            if (manner == 'weekly'):
+                new_col = 'weekday'
+                eqdf[new_col] = eqdf['time'].apply(func=fetch_weekday)
+            elif (manner == 'monthly'):
+                new_col = 'date'
+                eqdf[new_col] = eqdf['time'].apply(func=fetch_date)
+            else:
+                new_col = 'hours'
+                eqdf[new_col] = eqdf['time'].apply(func=fetch_hour)
+
+            eqdf = eqdf.sort_values(by='time')
+
+            return eqdf, center_lat, center_lon
+
+        def visualize_quakes_data(manner='daily', bbox='Worldwide', mag_thresh=2):
+            eqdf, clat, clon = fetch_quakes_data(manner=manner, bbox=bbox, mag_thresh=mag_thresh)
+
+            if (manner == 'monthly'):
+                af = 'date'
+            elif (manner == 'weekly'):
+                af = 'weekday'
+            else:
+                af = 'hours'
+
+            zoom = 3 if bbox != 'Worldwide' else 1
+
+            fig = px.scatter_mapbox(
+                data_frame=eqdf,
+                lat='latitude',
+                lon='longitude',
+                center=dict(lat=clat, lon=clon),
+                size='mag',
+                color='mag',
+                hover_name='sub_area',
+                zoom=zoom,
+                mapbox_style='stamen-terrain',
+                # color_continuous_scale=px.colors.cyclical.IceFire,
+                animation_frame=af,
+                title='{} Earthquakes - {}; mag - {}'.format(manner.title(), bbox, mag_thresh)
+            )
+
+            fig.update_layout(
+                margin=dict(l=0, r=0, t=40, b=0)
+            )
+
+            fig.show()
+            return None
+
+        visualize_quakes_data(manner='daily', mag_thresh=None)
+        plt.show()
+        return
+
+
 def main():
 
     quake = EarthquakeData();
@@ -264,6 +455,14 @@ def main():
 
     # This is a bonus feature - dumping the earthquake heatmap to google maps format [uses gmplot]
     quake.UseGMPLOTtoDumptoGoogleMap("earthquake_test.html")
+
+    # Experimental - Basemap is deprecated. Until that is replaced by Cartopy or others
+    # We will have the following functions for testing.
+    # return
+    # testing()
+    # prettymaps_example()
+    # plotly_maps()
+
 
 
 if __name__ == '__main__': # standard boilerplate calling main()
